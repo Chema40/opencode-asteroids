@@ -42,5 +42,6 @@ Luego visita `http://localhost:3000`.
 
 - 3 vidas con invencibilidad temporal al reaparecer (parpadeo)
 - Asteroides se parten en fragmentos más pequeños al ser destruidos
+- Estrella fugaz: cometa con cabeza estrellada que aparece aleatoriamente durante el nivel, con triple velocidad y desaparición temporal
 - Partículas de explosión al destruir asteroides
-- Power-up **Velocidad**: aparece aleatoriamente al destruir asteroides y duplica el movimiento de la nave durante cinco segundos
+- Power-up **Velocidad**: aparece aleatoriamente al destruir asteroides, siempre al destruir una estrella fugaz, y duplica el movimiento de la nave durante cinco segundos
