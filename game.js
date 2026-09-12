@@ -5,7 +5,8 @@ const ctx = canvas.getContext('2d');
 const W = 800;
 const H = 600;
 const SPEED_BOOST_DURATION = 5;
-const SPEED_POWER_UP_CHANCE = 0.2;
+const TRIPLE_SHOT_DURATION = 5;
+const POWER_UP_CHANCE = 0.2;
 const SHOOTING_STAR_DURATION = 8;
 const SHOOTING_STAR_SPEED_MULTIPLIER = 3;
 const SHOOTING_STAR_INTERVAL_MIN = 5;
@@ -224,6 +225,46 @@ class SpeedPowerUp {
   }
 }
 
+// ── Power-up: Triple shot ──────────────────────────────────────────────────────
+class TripleShotPowerUp {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 13;
+    this.vx = rand(-25, 25);
+    this.vy = rand(-25, 25);
+    this.ttl = 12;
+    this.dead = false;
+    this.pulse = 0;
+  }
+
+  update(dt) {
+    this.x = wrap(this.x + this.vx * dt, W);
+    this.y = wrap(this.y + this.vy * dt, H);
+    this.ttl -= dt;
+    this.pulse += dt * 5;
+    if (this.ttl <= 0) this.dead = true;
+  }
+
+  draw() {
+    const size = this.radius + Math.sin(this.pulse) * 1.5;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.strokeStyle = '#ff4fd8';
+    ctx.fillStyle = 'rgba(255, 79, 216, 0.12)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('3', 0, 0);
+    ctx.restore();
+  }
+}
+
 // ── Ship ──────────────────────────────────────────────────────────────────────
 class Ship {
   constructor() { this.reset(); }
@@ -239,6 +280,7 @@ class Ship {
     this.invincible    = 3;
     this.shootCooldown = 0;
     this.speedBoostTimer = 0;
+    this.tripleShotTimer = 0;
     this.dead          = false;
   }
 
@@ -247,6 +289,7 @@ class Ship {
     if (this.invincible    > 0) this.invincible    -= dt;
     if (this.shootCooldown > 0) this.shootCooldown -= dt;
     if (this.speedBoostTimer > 0) this.speedBoostTimer -= dt;
+    if (this.tripleShotTimer > 0) this.tripleShotTimer -= dt;
 
     const ROT   = 3.5;   // rad/s
     const THRUST = 260;  // px/s²
@@ -272,13 +315,24 @@ class Ship {
     this.speedBoostTimer = SPEED_BOOST_DURATION;
   }
 
+  activateTripleShot() {
+    this.tripleShotTimer = TRIPLE_SHOT_DURATION;
+  }
+
   tryShoot() {
     if (this.shootCooldown > 0 || this.dead) return [];
     this.shootCooldown = 0.2;
     const NOSE = 21;
-    const ox = this.x + Math.cos(this.angle) * NOSE;
-    const oy = this.y + Math.sin(this.angle) * NOSE;
-    return [new Bullet(ox, oy, this.angle)];
+    const offsets = this.tripleShotTimer > 0 ? [-8, 0, 8] : [0];
+    const forwardX = Math.cos(this.angle);
+    const forwardY = Math.sin(this.angle);
+    const sideX = -forwardY;
+    const sideY = forwardX;
+    return offsets.map(offset => new Bullet(
+      this.x + forwardX * NOSE + sideX * offset,
+      this.y + forwardY * NOSE + sideY * offset,
+      this.angle
+    ));
   }
 
   draw() {
@@ -385,6 +439,10 @@ function spawnSpeedPowerUp(x, y) {
   powerUps.push(new SpeedPowerUp(x, y));
 }
 
+function spawnTripleShotPowerUp(x, y) {
+  powerUps.push(new TripleShotPowerUp(x, y));
+}
+
 function initGame() {
   ship          = new Ship();
   bullets   = [];
@@ -417,6 +475,7 @@ function killShip() {
   explode(ship.x, ship.y, 14);
   ship.dead = true;
   ship.speedBoostTimer = 0;
+  ship.tripleShotTimer = 0;
   lives--;
   if (lives <= 0) {
     state = 'gameover';
@@ -476,8 +535,12 @@ function update(dt) {
         a.dead = true;
         score += POINTS[a.size] * (a.shootingStar ? 2 : 1);
         explode(a.x, a.y, a.size * 5);
-        if (a.shootingStar || Math.random() < SPEED_POWER_UP_CHANCE)
+        if (a.shootingStar) {
           spawnSpeedPowerUp(a.x, a.y);
+        } else if (Math.random() < POWER_UP_CHANCE) {
+          if (Math.random() < 0.5) spawnSpeedPowerUp(a.x, a.y);
+          else spawnTripleShotPowerUp(a.x, a.y);
+        }
         newAsteroids.push(...a.split());
       }
     }
@@ -498,7 +561,8 @@ function update(dt) {
   // Nave vs power-up
   for (const powerUp of powerUps) {
     if (dist(ship, powerUp) < ship.radius + powerUp.radius) {
-      ship.activateSpeedBoost();
+      if (powerUp instanceof SpeedPowerUp) ship.activateSpeedBoost();
+      else ship.activateTripleShot();
       powerUp.dead = true;
       break;
     }
@@ -540,6 +604,11 @@ function drawHUD() {
   if (ship.speedBoostTimer > 0) {
     ctx.fillStyle = '#00e5ff';
     ctx.fillText(`VELOCIDAD ${ship.speedBoostTimer.toFixed(1)}s`, W / 2, 48);
+  }
+
+  if (ship.tripleShotTimer > 0) {
+    ctx.fillStyle = '#ff4fd8';
+    ctx.fillText(`TRIPLE SHOT ${ship.tripleShotTimer.toFixed(1)}s`, W / 2, 68);
   }
 
   for (let i = 0; i < lives; i++)

@@ -45,3 +45,4 @@ Luego visita `http://localhost:3000`.
 - Estrella fugaz: cometa con cabeza estrellada que aparece aleatoriamente durante el nivel, con triple velocidad y desaparición temporal
 - Partículas de explosión al destruir asteroides
 - Power-up **Velocidad**: aparece aleatoriamente al destruir asteroides, siempre al destruir una estrella fugaz, y duplica el movimiento de la nave durante cinco segundos
+- Power-up **Triple shot**: aparece aleatoriamente al destruir asteroides y permite disparar tres balas paralelas durante cinco segundos
