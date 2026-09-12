@@ -8,19 +8,109 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       background: #000;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
+      padding: 20px;
+      font-family: monospace;
+    }
+    .game-shell {
+      width: min(100%, 800px);
+    }
+    .skin-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border: 1px solid #222;
+      background: #080808;
+    }
+    .skin-title {
+      color: #aaa;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .skin-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .skin-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border: 1px solid #333;
+      background: #111;
+      color: #aaa;
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+    }
+    .skin-button:hover,
+    .skin-button:focus-visible {
+      border-color: #777;
+      color: #fff;
+      outline: none;
+    }
+    .skin-button.active {
+      border-color: var(--skin-accent);
+      color: #fff;
+      box-shadow: 0 0 8px var(--skin-accent);
+    }
+    .skin-swatch {
+      width: 12px;
+      height: 12px;
+      border: 1px solid currentColor;
+      background: var(--skin-accent);
+      box-shadow: 0 0 6px var(--skin-accent);
     }
     canvas {
       display: block;
+      width: 100%;
+      height: auto;
       border: 1px solid #222;
+    }
+    @media (max-width: 560px) {
+      body { padding: 10px; }
+      .skin-panel {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .skin-options { justify-content: flex-start; }
     }
   </style>
 </head>
 <body>
-  <canvas id="canvas" width="800" height="600"></canvas>
+  <main class="game-shell">
+    <section class="skin-panel" aria-label="Selector de apariencia de la nave">
+      <span class="skin-title">NAVE / SKIN</span>
+      <div class="skin-options">
+        <button class="skin-button" type="button" data-skin="classic" style="--skin-accent: #fff">
+          <span class="skin-swatch" aria-hidden="true"></span>Clásica
+        </button>
+        <button class="skin-button" type="button" data-skin="neon" style="--skin-accent: #00e5ff">
+          <span class="skin-swatch" aria-hidden="true"></span>Neon
+        </button>
+        <button class="skin-button" type="button" data-skin="solar" style="--skin-accent: #ffd166">
+          <span class="skin-swatch" aria-hidden="true"></span>Solar
+        </button>
+        <button class="skin-button" type="button" data-skin="enterprise" style="--skin-accent: #b9c7d8">
+          <span class="skin-swatch" aria-hidden="true"></span>Enterprise
+        </button>
+        <button class="skin-button" type="button" data-skin="falcon" style="--skin-accent: #d8c5a5">
+          <span class="skin-swatch" aria-hidden="true"></span>Halcón
+        </button>
+      </div>
+    </section>
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </main>
   <script src="game.js"></script>
 </body>
 </html>
