@@ -10,6 +10,74 @@ const SHOOTING_STAR_DURATION = 8;
 const SHOOTING_STAR_SPEED_MULTIPLIER = 3;
 const SHOOTING_STAR_INTERVAL_MIN = 5;
 const SHOOTING_STAR_INTERVAL_MAX = 12;
+const SKIN_STORAGE_KEY = 'asteroids-ship-skin';
+const SKINS = {
+  classic: {
+    stroke: '#fff',
+    fill: 'rgba(255, 255, 255, 0.06)',
+    thrust: '#ff8200',
+    glow: 0,
+    shape: 'classic',
+  },
+  neon: {
+    stroke: '#00e5ff',
+    fill: 'rgba(0, 229, 255, 0.12)',
+    thrust: '#ff4fd8',
+    glow: 10,
+    shape: 'classic',
+  },
+  solar: {
+    stroke: '#ffd166',
+    fill: 'rgba(255, 209, 102, 0.14)',
+    thrust: '#ff5c35',
+    glow: 8,
+    shape: 'classic',
+  },
+  enterprise: {
+    stroke: '#b9c7d8',
+    fill: 'rgba(185, 199, 216, 0.16)',
+    thrust: '#8be9fd',
+    glow: 5,
+    shape: 'enterprise',
+  },
+  falcon: {
+    stroke: '#d8c5a5',
+    fill: 'rgba(216, 197, 165, 0.15)',
+    thrust: '#79d8ff',
+    glow: 4,
+    shape: 'falcon',
+  },
+};
+
+const skinButtons = document.querySelectorAll('[data-skin]');
+let activeSkin = 'classic';
+
+try {
+  const savedSkin = localStorage.getItem(SKIN_STORAGE_KEY);
+  if (savedSkin && SKINS[savedSkin]) activeSkin = savedSkin;
+} catch (error) {
+  // El juego sigue funcionando si el navegador bloquea el almacenamiento local.
+}
+
+function selectSkin(skinName) {
+  if (!SKINS[skinName]) return;
+  activeSkin = skinName;
+  skinButtons.forEach(button => {
+    const selected = button.dataset.skin === activeSkin;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', selected);
+  });
+  try {
+    localStorage.setItem(SKIN_STORAGE_KEY, activeSkin);
+  } catch (error) {
+    // La selección se mantiene durante la sesión aunque no pueda persistirse.
+  }
+}
+
+skinButtons.forEach(button => {
+  button.addEventListener('click', () => selectSkin(button.dataset.skin));
+});
+selectSkin(activeSkin);
 
 // ── Input ─────────────────────────────────────────────────────────────────────
 const keys = {};
@@ -224,6 +292,102 @@ class SpeedPowerUp {
   }
 }
 
+function drawClassicShip() {
+  ctx.beginPath();
+  ctx.moveTo(20, 0);
+  ctx.lineTo(-12, -9);
+  ctx.lineTo(-7, 0);
+  ctx.lineTo(-12, 9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawEnterpriseShip() {
+  // Disco frontal, casco central y dos góndolas laterales.
+  ctx.beginPath();
+  ctx.ellipse(5, 0, 15, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-8, -3);
+  ctx.lineTo(-15, -7);
+  ctx.lineTo(-17, -5);
+  ctx.lineTo(-8, 0);
+  ctx.lineTo(-17, 5);
+  ctx.lineTo(-15, 7);
+  ctx.lineTo(-8, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  for (const y of [-11, 11]) {
+    ctx.beginPath();
+    ctx.roundRect(-8, y - 2, 19, 4, 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-5, y);
+    ctx.lineTo(7, y);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(0, -5);
+  ctx.lineTo(0, 5);
+  ctx.stroke();
+}
+
+function drawFalconShip() {
+  // Silueta ancha con morro partido y cabina lateral.
+  ctx.beginPath();
+  ctx.moveTo(20, -3);
+  ctx.lineTo(10, -10);
+  ctx.lineTo(-3, -12);
+  ctx.lineTo(-14, -8);
+  ctx.lineTo(-9, -2);
+  ctx.lineTo(-17, 0);
+  ctx.lineTo(-9, 2);
+  ctx.lineTo(-14, 8);
+  ctx.lineTo(-3, 12);
+  ctx.lineTo(10, 10);
+  ctx.lineTo(20, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(5, -8);
+  ctx.lineTo(13, -2);
+  ctx.lineTo(7, -2);
+  ctx.lineTo(3, -5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-9, -5);
+  ctx.lineTo(4, -5);
+  ctx.lineTo(9, 0);
+  ctx.lineTo(4, 5);
+  ctx.lineTo(-9, 5);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-14, -3);
+  ctx.lineTo(-3, -3);
+  ctx.moveTo(-14, 3);
+  ctx.lineTo(-3, 3);
+  ctx.stroke();
+}
+
+function drawShipShape(skin) {
+  if (skin.shape === 'enterprise') drawEnterpriseShip();
+  else if (skin.shape === 'falcon') drawFalconShip();
+  else drawClassicShip();
+}
+
 // ── Ship ──────────────────────────────────────────────────────────────────────
 class Ship {
   constructor() { this.reset(); }
@@ -289,18 +453,15 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = '#fff';
+    const skin = SKINS[activeSkin];
+    ctx.strokeStyle = skin.stroke;
+    ctx.fillStyle = skin.fill;
+    ctx.shadowColor = skin.stroke;
+    ctx.shadowBlur = skin.glow;
     ctx.lineWidth   = 1.5;
     ctx.lineJoin    = 'round';
 
-    // Silueta clásica: triángulo con muesca trasera
-    ctx.beginPath();
-    ctx.moveTo( 20,  0);   // nariz
-    ctx.lineTo(-12, -9);   // ala izquierda
-    ctx.lineTo( -7,  0);   // muesca trasera
-    ctx.lineTo(-12,  9);   // ala derecha
-    ctx.closePath();
-    ctx.stroke();
+    drawShipShape(skin);
 
     // Llama del propulsor
     if (this.thrusting && Math.random() > 0.35) {
@@ -308,7 +469,9 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8,  4);
-      ctx.strokeStyle = 'rgba(255, 130, 0, 0.85)';
+      ctx.strokeStyle = skin.thrust;
+      ctx.shadowColor = skin.thrust;
+      ctx.shadowBlur = skin.glow;
       ctx.stroke();
     }
 
@@ -511,19 +674,18 @@ function update(dt) {
 
 // ── Draw ──────────────────────────────────────────────────────────────────────
 function drawLifeIcon(x, y) {
+  const skin = SKINS[activeSkin];
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-Math.PI / 2);
-  ctx.strokeStyle = '#fff';
+  ctx.scale(0.45, 0.45);
+  ctx.strokeStyle = skin.stroke;
+  ctx.fillStyle = skin.fill;
+  ctx.shadowColor = skin.stroke;
+  ctx.shadowBlur = skin.glow;
   ctx.lineWidth   = 1.2;
   ctx.lineJoin    = 'round';
-  ctx.beginPath();
-  ctx.moveTo( 9,  0);
-  ctx.lineTo(-6, -5);
-  ctx.lineTo(-3,  0);
-  ctx.lineTo(-6,  5);
-  ctx.closePath();
-  ctx.stroke();
+  drawShipShape(skin);
   ctx.restore();
 }
 
