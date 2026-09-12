@@ -46,3 +46,4 @@ Luego visita `http://localhost:3000`.
 - Partículas de explosión al destruir asteroides
 - Power-up **Velocidad**: aparece aleatoriamente al destruir asteroides, siempre al destruir una estrella fugaz, y duplica el movimiento de la nave durante cinco segundos
 - Power-up **Triple shot**: aparece aleatoriamente al destruir asteroides y permite disparar tres balas paralelas durante cinco segundos
+- Power-up **Escudo**: aparece aleatoriamente al destruir asteroides y protege la nave de colisiones durante ocho segundos
