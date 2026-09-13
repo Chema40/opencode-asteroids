@@ -50,6 +50,15 @@ const SKINS = {
     glow: 4,
     shape: 'falcon',
   },
+  purple: {
+    stroke: '#b45cff',
+    fill: 'rgba(180, 92, 255, 0.2)',
+    thrust: '#e0aaff',
+    glow: 12,
+    shape: 'classic',
+    scale: 2,
+    scoreMultiplier: 2,
+  },
 };
 
 const skinButtons = document.querySelectorAll('[data-skin]');
@@ -480,13 +489,16 @@ function drawShipShape(skin) {
 class Ship {
   constructor() { this.reset(); }
 
+  get radius() {
+    return 12 * (SKINS[activeSkin].scale || 1);
+  }
+
   reset() {
     this.x      = W / 2;
     this.y      = H / 2;
     this.angle  = -Math.PI / 2;
     this.vx     = 0;
     this.vy     = 0;
-    this.radius = 12;
     this.thrusting     = false;
     this.invincible    = 3;
     this.shootCooldown = 0;
@@ -539,8 +551,9 @@ class Ship {
   tryShoot() {
     if (this.shootCooldown > 0 || this.dead) return [];
     this.shootCooldown = 0.2;
-    const NOSE = 21;
-    const offsets = this.tripleShotTimer > 0 ? [-8, 0, 8] : [0];
+    const scale = SKINS[activeSkin].scale || 1;
+    const NOSE = 21 * scale;
+    const offsets = this.tripleShotTimer > 0 ? [-8 * scale, 0, 8 * scale] : [0];
     const forwardX = Math.cos(this.angle);
     const forwardY = Math.sin(this.angle);
     const sideX = -forwardY;
@@ -561,6 +574,7 @@ class Ship {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
     const skin = SKINS[activeSkin];
+    ctx.scale(skin.scale || 1, skin.scale || 1);
     ctx.strokeStyle = skin.stroke;
     ctx.fillStyle = skin.fill;
     ctx.shadowColor = skin.stroke;
@@ -777,7 +791,8 @@ function update(dt) {
       if (!a.dead && !b.dead && dist(b, a) < a.radius) {
         b.dead = true;
         a.dead = true;
-        score += POINTS[a.size] * (a.shootingStar ? 2 : 1);
+        score += POINTS[a.size] * (a.shootingStar ? 2 : 1) *
+          (SKINS[activeSkin].scoreMultiplier || 1);
         explode(a.x, a.y, a.size * 5);
         if (a.shootingStar) {
           spawnSpeedPowerUp(a.x, a.y);
@@ -844,6 +859,12 @@ function drawHUD() {
   ctx.textAlign = 'left';
   ctx.fillText(`SCORE  ${score}`, 14, 26);
 
+  if ((SKINS[activeSkin].scoreMultiplier || 1) > 1) {
+    ctx.fillStyle = SKINS[activeSkin].stroke;
+    ctx.fillText('BONUS NAVE x2', 14, 48);
+  }
+
+  ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
   ctx.fillText(`NIVEL ${level}`, W / 2, 26);
 
