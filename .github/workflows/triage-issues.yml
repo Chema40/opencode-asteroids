@@ -4,6 +4,9 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  issues: write
+
 jobs:
   triage:
     runs-on: ubuntu-latest
@@ -101,21 +104,12 @@ jobs:
           fs.writeFileSync(outputPath, JSON.stringify(metadata))
           NODE
 
-      - name: Create GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-
       - name: Apply labels and review information
         uses: actions/github-script@v7
         env:
           METADATA_PATH: ${{ runner.temp }}/issue-triage/metadata.json
         with:
-          github-token: ${{ steps.app-token.outputs.token }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs')
             const metadata = JSON.parse(fs.readFileSync(process.env.METADATA_PATH, 'utf8'))
